@@ -81,11 +81,6 @@ public class SmartPlayer extends Player {
     public void play() {
         player = client.getMyPlayerNumber();
         long seed = System.currentTimeMillis();
-        try {
-            sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         long start = System.currentTimeMillis();
         long end = start + 200;
         float[] bot0Target;
