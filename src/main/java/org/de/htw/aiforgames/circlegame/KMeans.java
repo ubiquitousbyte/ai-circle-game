@@ -94,7 +94,6 @@ public class KMeans {
             }
             SSE = newSSE;
         }
-      //  System.out.println(Arrays.deepToString(centroids));
         return centroids;
     }
 

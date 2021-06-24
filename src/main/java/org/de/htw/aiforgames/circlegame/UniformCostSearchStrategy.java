@@ -39,7 +39,7 @@ public class UniformCostSearchStrategy implements SearchStrategy<GraphNode, floa
 
     private List<float[]> solution(RouteNode target) {
         List<float[]> path = new ArrayList<>();
-        while (target != null) {
+        while (target != null && target.action != null) {
             path.add(target.action);
             target = target.parent;
         }

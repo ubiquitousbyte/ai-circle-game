@@ -87,7 +87,7 @@ public class SmartPlayer extends Player {
             e.printStackTrace();
         }
         long start = System.currentTimeMillis();
-        long end = start + 1*125;
+        long end = start + 200;
         float[] bot0Target;
         float[] bot1Target;
         while (client.isAlive()) {
@@ -99,22 +99,16 @@ public class SmartPlayer extends Player {
                 bot1Target = kmeans.sampleTargetFromClusterWithMostBlockedElements(centroids);
                 bot0Target = kmeans.sampleTargetFromClusterWIthMostFreePixels(centroids);
                 for (int i = 0; i < 3; i++) {
-                    if (positions[i] != null) {
+                    if (positions != null && positions[i] != null) {
                         CircleSearchProblem problem = new CircleSearchProblem(positions[i], (i == 1) ? bot1Target : bot0Target, i, player);
                         UniformCostSearchStrategy strategy = new UniformCostSearchStrategy();
                         for (float[] action : strategy.search(problem)) {
-                            try {
-                                client.changeMoveDirection(i, action[0], action[1], action[2]);
-                            }
-                            catch (NullPointerException e) {
-                               // logger.log(Level.INFO, "Bot " + i + " died");
-                                break;
-                            }
+                            client.changeMoveDirection(i, action[0], action[1], action[2]);
                         }
                     }
                 }
                 start = System.currentTimeMillis();
-                end = start + 1*125;
+                end = start + 200;
             }
 
         }

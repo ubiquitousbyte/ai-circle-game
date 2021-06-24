@@ -47,7 +47,7 @@ public class CircleSearchProblem implements SearchProblem<GraphNode, float[]> {
         float z = state.z + action[2];
 
         for (GraphNode neighbour : state.neighbors) {
-            if (Math.abs(neighbour.x-x) < 0.00001 && Math.abs(neighbour.y-y) < 0.00001 && Math.abs(neighbour.z-z) < 0.00001) {
+            if (Math.abs(neighbour.x-x) < 0.01 && Math.abs(neighbour.y-y) < 0.01 && Math.abs(neighbour.z-z) < 0.01) {
                 return neighbour;
             }
         }
@@ -64,20 +64,20 @@ public class CircleSearchProblem implements SearchProblem<GraphNode, float[]> {
                     w1 += 3.5f;
                 }
                 if (successor.blocked) {
-                    w2 += 350f;
+                    w2 += 1000f;
                 }
                 break;
             case 1:
                 if (successor.owner == (player+1)) {
-                    w1 += 2.5f;
+                    w1 += 10f;
                 }
                 break;
             case 2:
                 if (successor.owner == (player+1)) {
-                    w1 += 7f;
+                    w1 += 100f;
                 }
                 if (successor.blocked) {
-                    w2 += 750f;
+                    w2 += 100000f;
                 }
                 break;
             default:
