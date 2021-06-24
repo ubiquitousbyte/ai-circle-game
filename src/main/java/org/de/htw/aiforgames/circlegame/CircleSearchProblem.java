@@ -61,10 +61,10 @@ public class CircleSearchProblem implements SearchProblem<GraphNode, float[]> {
         switch (bot) {
             case 0:
                 if (successor.owner == (player+1)) {
-                    w1 += 2.5f;
+                    w1 += 3.5f;
                 }
                 if (successor.blocked) {
-                    w2 += 10f;
+                    w2 += 350f;
                 }
                 break;
             case 1:
@@ -74,10 +74,10 @@ public class CircleSearchProblem implements SearchProblem<GraphNode, float[]> {
                 break;
             case 2:
                 if (successor.owner == (player+1)) {
-                    w1 += 3.5f;
+                    w1 += 7f;
                 }
                 if (successor.blocked) {
-                    w2 += 12f;
+                    w2 += 750f;
                 }
                 break;
             default:

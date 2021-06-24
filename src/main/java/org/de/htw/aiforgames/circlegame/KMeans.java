@@ -3,34 +3,43 @@ package org.de.htw.aiforgames.circlegame;
 import lenz.htw.coast.world.GraphNode;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class KMeans {
 
     public static final int FEATURE_VECTOR_LEN = 2;
-    private GraphNode[] graph;
-    private int[] clusterAssignments;
+    private final GraphNode[] graph;
+    private final int[] clusterAssignments;
+    private final Random random;
 
-    public KMeans(GraphNode[] graph) {
+    public KMeans(GraphNode[] graph, long seed) {
         this.graph = graph;
         this.clusterAssignments = new int[graph.length];
+        this.random = new Random(seed);
     }
 
     private float[][] X() {
         float[][] X = new float[graph.length][FEATURE_VECTOR_LEN];
+        int[] nodeCounts = new int[4];
+        int[] blockedNodeCounts = new int[4];
+
+        for (GraphNode node : graph) {
+            if (node.blocked) {
+                blockedNodeCounts[node.owner]++;
+            }
+            nodeCounts[node.owner]++;
+        }
+
         for (int i = 0; i < graph.length; i++) {
-            GraphNode node = graph[i];
-            X[i][0] = node.owner;
-            X[i][1] = node.blocked ? 1f : 0f;
+            X[i][0] = nodeCounts[graph[i].owner];
+            X[i][1] = blockedNodeCounts[graph[i].owner];
         }
         return X;
     }
 
     private float[][] sampleRandomCentroids(float[][] X, int k) {
         float[][] centroids = new float[k][FEATURE_VECTOR_LEN];
-        Random r = new Random();
         for (int i = 0; i < k; i++) {
-            centroids[i] = X[r.nextInt(graph.length)];
+            centroids[i] = X[random.nextInt(graph.length)];
         }
         return centroids;
     }
@@ -85,8 +94,34 @@ public class KMeans {
             }
             SSE = newSSE;
         }
-        System.out.println(Arrays.deepToString(centroids));
+      //  System.out.println(Arrays.deepToString(centroids));
         return centroids;
+    }
+
+    public float[] sampleTargetFromClusterWithMostBlockedElements(float[][] clusterCentroids) {
+        float mostBlockedElements = 0;
+        int clusterIndex = -1;
+        for (int i = 0; i < clusterCentroids.length; i++) {
+            if (clusterCentroids[i][1] > mostBlockedElements) {
+                mostBlockedElements = clusterCentroids[i][1];
+                clusterIndex = i;
+            }
+        }
+        GraphNode n = sampleNodeFromCluster(clusterIndex);
+        return new float[]{n.x, n.y, n.z};
+    }
+
+    public float[] sampleTargetFromClusterWIthMostFreePixels(float[][] clusterCentroids) {
+        float mostFreePixels = 0;
+        int clusterIndex = -1;
+        for (int i = 0; i < clusterCentroids.length; i++) {
+            if (clusterCentroids[i][0] > mostFreePixels) {
+                mostFreePixels = clusterCentroids[i][0];
+                clusterIndex = i;
+            }
+        }
+        GraphNode n = sampleNodeFromCluster(clusterIndex);
+        return new float[]{n.x, n.y, n.z};
     }
 
     public GraphNode sampleNodeFromCluster(int k) {
@@ -99,7 +134,6 @@ public class KMeans {
         if (possibleSamples.isEmpty()) {
             return graph[0];
         }
-        Random r = new Random();
-        return possibleSamples.get(r.nextInt(possibleSamples.size()));
+        return possibleSamples.get(random.nextInt(possibleSamples.size()));
     }
 }

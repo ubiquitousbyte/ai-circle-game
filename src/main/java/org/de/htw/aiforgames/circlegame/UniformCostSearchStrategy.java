@@ -19,7 +19,7 @@ public class UniformCostSearchStrategy implements SearchStrategy<GraphNode, floa
             explored.add(current);
             frontier.addAll(expand(problem, current));
         }
-        return null;
+        return new ArrayList<>();
     }
 
     private static Set<RouteNode> expand(SearchProblem<GraphNode, float[]> problem, RouteNode current) {

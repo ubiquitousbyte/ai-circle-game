@@ -31,7 +31,7 @@ public class RouteNode implements Comparable<RouteNode> {
 
     @Override
     public int hashCode() {
-        return state.hashCode();
+        return Objects.hashCode(state);
     }
 
     @Override

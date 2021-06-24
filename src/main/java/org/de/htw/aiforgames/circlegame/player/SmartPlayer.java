@@ -3,7 +3,6 @@ package org.de.htw.aiforgames.circlegame.player;
 import lenz.htw.coast.world.GraphNode;
 import org.de.htw.aiforgames.circlegame.CircleSearchProblem;
 import org.de.htw.aiforgames.circlegame.KMeans;
-import org.de.htw.aiforgames.circlegame.SearchProblem;
 import org.de.htw.aiforgames.circlegame.UniformCostSearchStrategy;
 
 import java.util.*;
@@ -14,18 +13,13 @@ import static java.lang.Thread.sleep;
 public class SmartPlayer extends Player {
 
     private static final int PLAYER_COUNT = 3;
-
     private int player;
-
-    private GraphNode[] startNodes;
-
     private final String server;
     private final String team;
 
     public SmartPlayer(String server, String team) {
         this.server = server;
         this.team = team;
-        startNodes = new GraphNode[3];
     }
 
     @Override
@@ -35,7 +29,7 @@ public class SmartPlayer extends Player {
 
     @Override
     public String getWinMessage() {
-        return "Well player :)";
+        return "Well played :)";
     }
 
     @Override
@@ -63,45 +57,15 @@ public class SmartPlayer extends Player {
         }
     }
 
-    private GraphNode[][] getInitialBotPositions() {
-        int[] enemyIds = getEnemyIds();
-        float[][] firstEnemyPositions = getBotPositions(enemyIds[0]);
-        float[][] secondEnemyPositions = getBotPositions(enemyIds[1]);
-        float[][] myPlayerPositions = getBotPositions(player);
-        GraphNode[][] result = new GraphNode[3][3];
-
-        int count = 0;
-        for (GraphNode node : client.getGraph()) {
-            for (int i = 0; i < 3; i++) {
-                float[] nodePosition = new float[]{node.x, node.y, node.z};
-                if (Arrays.equals(firstEnemyPositions[i], nodePosition)) {
-                    result[enemyIds[0]][i] = node;
-                    count++;
-                }
-                else if (Arrays.equals(secondEnemyPositions[i], nodePosition)) {
-                    result[enemyIds[1]][i] = node;
-                    count++;
-                }
-                else if (Arrays.equals(myPlayerPositions[i], nodePosition)) {
-                    result[player][i] = node;
-                    count++;
-                }
-            }
-            if (count == 9) {
-                break;
-            }
-        }
-        return result;
-    }
-
     private GraphNode[] getBotPositions(GraphNode[] graph) {
         GraphNode[] result = new GraphNode[3];
         float[][] positionVectors = getBotPositions(player);
         int count = 0;
         for (GraphNode node : graph) {
-            float[] nodePosition = new float[]{node.x, node.y, node.z};
-            for (int i = 0; i < 3; i++) {
-                if (Arrays.equals(positionVectors[i], nodePosition)) {
+           for (int i = 0; i < 3; i++) {
+                if (Math.abs(positionVectors[i][0]-node.x) < 0.1
+                        && Math.abs(positionVectors[i][1]-node.y) < 0.1
+                        && Math.abs(positionVectors[i][2]-node.z) < 0.1) {
                     result[i] = node;
                     count++;
                 }
@@ -116,37 +80,43 @@ public class SmartPlayer extends Player {
     @Override
     public void play() {
         player = client.getMyPlayerNumber();
-        GraphNode[] graph = client.getGraph();
-        GraphNode[] botPositions = getBotPositions(graph);
-        if (botPositions == null) {
-            logger.log(Level.WARNING, "Cannot determine bot positions. Exiting.");
-            return;
+        long seed = System.currentTimeMillis();
+        try {
+            sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        KMeans kmeans = new KMeans(client.getGraph());
-        float[][] centroids = kmeans.cluster(8);
         long start = System.currentTimeMillis();
-        long end = start + 2*1000;
+        long end = start + 1*125;
+        float[] bot0Target;
+        float[] bot1Target;
         while (client.isAlive()) {
             if (System.currentTimeMillis() > end) {
-                kmeans = new KMeans(client.getGraph());
-                centroids = kmeans.cluster(8);
-                start = System.currentTimeMillis();
-                end = start + 2*1000;
-            }
-           /* for (int i = 0; i < 3; i++) {
-                GraphNode target = kmeans.sampleNodeFromCluster(i);
-                CircleSearchProblem c = new CircleSearchProblem(botPositions[i], new float[]{target.x, target.y, target.z}, i, player);
-                UniformCostSearchStrategy s = new UniformCostSearchStrategy();
-                try {
-                    for (float[] action : s.search(c)) {
-                        client.changeMoveDirection(i, action[0], action[1], action[2]);
+                GraphNode[] nodes = client.getGraph();
+                GraphNode[] positions = getBotPositions(nodes);
+                KMeans kmeans = new KMeans(nodes, seed);
+                float[][] centroids = kmeans.cluster(3);
+                bot1Target = kmeans.sampleTargetFromClusterWithMostBlockedElements(centroids);
+                bot0Target = kmeans.sampleTargetFromClusterWIthMostFreePixels(centroids);
+                for (int i = 0; i < 3; i++) {
+                    if (positions[i] != null) {
+                        CircleSearchProblem problem = new CircleSearchProblem(positions[i], (i == 1) ? bot1Target : bot0Target, i, player);
+                        UniformCostSearchStrategy strategy = new UniformCostSearchStrategy();
+                        for (float[] action : strategy.search(problem)) {
+                            try {
+                                client.changeMoveDirection(i, action[0], action[1], action[2]);
+                            }
+                            catch (NullPointerException e) {
+                               // logger.log(Level.INFO, "Bot " + i + " died");
+                                break;
+                            }
+                        }
                     }
                 }
-                catch (NullPointerException e) {
-                    continue;
-                }
-                botPositions[i] = target;
-            }*/
+                start = System.currentTimeMillis();
+                end = start + 1*125;
+            }
+
         }
     }
 }
